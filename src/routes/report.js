@@ -54,7 +54,7 @@ router.post('/tickets/:id/report', upload.array('attachments', 5), async (req, r
     // 3) Enviar correo con adjunto
     const transporter = createTransport();
     const mailOptions = {
-      from: process.env.REPORT_MAIL_FROM || 'no-reply@localhost',
+      from: process.env.REPORT_MAIL_FROM || 'cvallejo069@gmail.com',
       to: process.env.REPORT_MAIL_TO || 'admin@localhost',
       subject: `Reporte ticket ${String(ticket._id)} - ${ticket.title}`,
       text: `Se adjunta el reporte del ticket ${String(ticket._id)}. Prioridad: ${ticket.priority}.`,

@@ -17,9 +17,31 @@ connectDb();
 
 const app = express();
 
-// CORS
-const corsOrigin = process.env.CORS_ORIGIN || '*';
-app.use(cors({ origin: corsOrigin, credentials: true }));
+/* =========================
+   CORS DINÁMICO POR ENV
+   ========================= */
+const rawOrigins = process.env.CORS_ORIGIN || '';
+const allowedOrigins = rawOrigins
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Permite peticiones sin origin (curl, health checks, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  credentials: true,
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  allowedHeaders: 'Content-Type, Authorization',
+};
+
+// ✅ CORS global
+app.use(cors(corsOptions));
+// ⚠️ Ya no usamos app.options('*') porque causaba PathError
+app.options(/.*/, cors(corsOptions));
 
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
@@ -37,6 +59,9 @@ app.use('/api/user', userRoutes);
 app.use('/api/tickets', ticketsRoutes);
 app.use('/api', reportRoutes);
 
+// Healthcheck útil para Render
+app.get('/healthz', (_req, res) => res.json({ ok: true }));
+
 // 404
 app.use((req, res) => {
   res.status(404).json({ message: 'Ruta no encontrada' });
@@ -51,4 +76,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(` Servidor corriendo en puerto ${PORT}`);
+  console.log(' CORS_ORIGIN permitidos:', allowedOrigins);
 });
