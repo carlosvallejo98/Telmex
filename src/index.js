@@ -7,8 +7,6 @@ const connectDb = require('./config/db');
 const authRoutes = require('./routes/auth');
 const historyRoutes = require('./routes/history');
 const userRoutes = require('./routes/user');
-
-// NUEVO
 const ticketsRoutes = require('./routes/tickets');
 const reportRoutes = require('./routes/report');
 
@@ -18,17 +16,16 @@ connectDb();
 const app = express();
 
 /* =========================
-   CORS DINÁMICO POR ENV
+   CORS PERMITIDOS (LOCAL + NETLIFY)
    ========================= */
-const rawOrigins = process.env.CORS_ORIGIN || '';
-const allowedOrigins = rawOrigins
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://telmex.netlify.app'
+];
 
 const corsOptions = {
   origin(origin, callback) {
-    // Permite peticiones sin origin (curl, health checks, etc.)
+    // Permitir peticiones sin origin (curl, health checks, etc.)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error(`Not allowed by CORS: ${origin}`));
@@ -40,7 +37,6 @@ const corsOptions = {
 
 // ✅ CORS global
 app.use(cors(corsOptions));
-// ⚠️ Ya no usamos app.options('*') porque causaba PathError
 app.options(/.*/, cors(corsOptions));
 
 // Body parsers
@@ -54,8 +50,6 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/historial', historyRoutes);
 app.use('/api/user', userRoutes);
-
-// NUEVO
 app.use('/api/tickets', ticketsRoutes);
 app.use('/api', reportRoutes);
 
@@ -75,6 +69,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(` Servidor corriendo en puerto ${PORT}`);
-  console.log(' CORS_ORIGIN permitidos:', allowedOrigins);
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+  console.log('CORS_ORIGIN permitidos:', allowedOrigins);
 });
